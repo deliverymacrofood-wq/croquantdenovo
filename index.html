@@ -32,11 +32,17 @@ header h1 {
     margin: 0;
 }
 
+header p {
+    margin: 8px 0 0;
+}
+
 .status {
     text-align: center;
     padding: 10px;
     font-weight: bold;
 }
+
+/* RESUMO */
 
 .container {
     max-width: 1200px;
@@ -48,7 +54,7 @@ header h1 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
 }
 
 .resumo-card {
@@ -64,23 +70,29 @@ header h1 {
 }
 
 .resumo-numero {
-    font-size: 35px;
+    font-size: 32px;
     font-weight: bold;
 }
+
+/* RANKING */
 
 .ranking {
     background: white;
     border-radius: 15px;
     padding: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
     box-shadow: 0 3px 10px #0002;
 }
 
 .ranking-item {
     display: flex;
     align-items: center;
-    padding: 12px;
+    padding: 13px 10px;
     border-bottom: 1px solid #eee;
+}
+
+.ranking-item:last-child {
+    border-bottom: none;
 }
 
 .posicao {
@@ -97,13 +109,22 @@ header h1 {
 
 .ranking-vendas {
     font-weight: bold;
+    font-size: 18px;
 }
+
+/* VENDEDORES */
 
 .equipe {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
 }
+
+/*
+   IMPORTANTE:
+   Os vendedores são criados uma única vez
+   e nunca são reordenados.
+*/
 
 .vendedor {
     background: white;
@@ -116,6 +137,7 @@ header h1 {
 .nome {
     font-size: 21px;
     font-weight: bold;
+    min-height: 25px;
 }
 
 .contador {
@@ -139,6 +161,10 @@ button {
     cursor: pointer;
 }
 
+button:active {
+    transform: scale(.95);
+}
+
 .menos {
     background: #e53935;
     color: white;
@@ -149,9 +175,7 @@ button {
     color: white;
 }
 
-button:active {
-    transform: scale(.95);
-}
+/* MOBILE */
 
 @media(max-width: 800px) {
 
@@ -200,47 +224,104 @@ button:active {
 <body>
 
 <header>
+
     <h1>🏆 RANKING DE VENDAS</h1>
-    <p>Atualização em tempo real</p>
+
+    <p>
+        Atualização em tempo real
+    </p>
+
 </header>
 
 <div class="status" id="status">
     🔄 Conectando...
 </div>
 
+
 <div class="container">
+
+    <!-- RESUMO -->
 
     <div class="resumo">
 
         <div class="resumo-card">
-            <h3>📦 TOTAL DE VENDAS</h3>
-            <div class="resumo-numero" id="total">0</div>
+
+            <h3>
+                📦 TOTAL DE VENDAS
+            </h3>
+
+            <div
+                class="resumo-numero"
+                id="total">
+                0
+            </div>
+
         </div>
 
-        <div class="resumo-card">
-            <h3>🥇 LÍDER</h3>
-            <div class="resumo-numero" id="lider">-</div>
-        </div>
 
         <div class="resumo-card">
-            <h3>🏆 VENDAS DO LÍDER</h3>
-            <div class="resumo-numero" id="vendasLider">0</div>
+
+            <h3>
+                🥇 LÍDER
+            </h3>
+
+            <div
+                class="resumo-numero"
+                id="lider">
+                -
+            </div>
+
+        </div>
+
+
+        <div class="resumo-card">
+
+            <h3>
+                🏆 VENDAS DO LÍDER
+            </h3>
+
+            <div
+                class="resumo-numero"
+                id="vendasLider">
+                0
+            </div>
+
         </div>
 
     </div>
 
-    <h2>🏆 Ranking</h2>
 
-    <div class="ranking" id="ranking"></div>
+    <!-- RANKING -->
 
-    <h2>👥 Vendedores</h2>
+    <h2>
+        🏆 Ranking
+    </h2>
 
-    <div class="equipe" id="equipe"></div>
+    <div
+        class="ranking"
+        id="ranking">
+    </div>
+
+
+    <!-- VENDEDORES -->
+
+    <h2>
+        👥 Vendedores
+    </h2>
+
+    <div
+        class="equipe"
+        id="equipe">
+    </div>
 
 </div>
 
 
 <script>
+
+/* ==========================================
+   CONFIGURAÇÃO SUPABASE
+========================================== */
 
 const SUPABASE_URL =
 "https://qjheutgzirjlykoyjadz.supabase.co";
@@ -248,26 +329,108 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
 "sb_publishable__FyKOqu1wA6zXvBfGkwX3A_bn2EEY67";
 
+
 const db = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
 
+
+/* ==========================================
+   LISTA FIXA DOS VENDEDORES
+========================================== */
+
+const nomes = [
+
+    "Hugo",
+    "Jeronimo",
+    "Leo",
+    "André",
+    "Felipe",
+    "Gilvan",
+    "Taciana",
+    "Joyce",
+    "Karlone",
+    "Fernanda",
+    "Fagna",
+    "Taisa",
+    "Francielly",
+    "Rozivan",
+    "Wagner",
+    "Dani"
+
+];
+
+
 let vendedores = [];
 
 
-/* ============================
-   CARREGAR VENDEDORES
-============================ */
+/* ==========================================
+   CRIAR OS CARTÕES
+   A ORDEM É FIXA
+========================================== */
+
+function criarCartoes() {
+
+    const equipe =
+        document.getElementById("equipe");
+
+    equipe.innerHTML = "";
+
+
+    nomes.forEach(nome => {
+
+        equipe.innerHTML += `
+
+            <div
+                class="vendedor"
+                id="card-${nome}">
+
+                <div class="nome">
+                    ${nome}
+                </div>
+
+                <div
+                    class="contador"
+                    id="contador-${nome}">
+                    0
+                </div>
+
+                <div class="botoes">
+
+                    <button
+                        class="menos"
+                        onclick="alterar('${nome}', -1)">
+                        −1
+                    </button>
+
+                    <button
+                        class="mais"
+                        onclick="alterar('${nome}', 1)">
+                        +1
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+
+/* ==========================================
+   CARREGAR DADOS
+========================================== */
 
 async function carregar() {
 
     const { data, error } = await db
         .from("vendedores")
-        .select("*")
-        .order("vendas", {
-            ascending: false
-        });
+        .select("*");
+
 
     if (error) {
 
@@ -277,113 +440,133 @@ async function carregar() {
             "🔴 Erro ao conectar ao banco";
 
         return;
+
     }
 
-    vendedores = data;
 
-    mostrar();
+    vendedores = data || [];
+
+
+    atualizarContadores();
+
+    atualizarRanking();
+
 
     document.getElementById("status").textContent =
-        "🟢 Conectado — dados sincronizados";
+        "🟢 Conectado — atualização em tempo real";
 
 }
 
 
-/* ============================
-   MOSTRAR NA TELA
-============================ */
+/* ==========================================
+   ATUALIZAR OS CONTADORES
+   SEM ALTERAR A POSIÇÃO DOS CARTÕES
+========================================== */
 
-function mostrar() {
+function atualizarContadores() {
 
-    const equipe =
-        document.getElementById("equipe");
+    vendedores.forEach(vendedor => {
+
+        const elemento =
+            document.getElementById(
+                "contador-" + vendedor.nome
+            );
+
+
+        if (elemento) {
+
+            elemento.textContent =
+                vendedor.vendas;
+
+        }
+
+    });
+
+}
+
+
+/* ==========================================
+   ATUALIZAR RANKING
+   SOMENTE O RANKING MUDA DE POSIÇÃO
+========================================== */
+
+function atualizarRanking() {
 
     const ranking =
         document.getElementById("ranking");
 
-    equipe.innerHTML = "";
+
+    /*
+       Cria uma cópia para ordenar.
+       A lista original NÃO é alterada.
+    */
+
+    const listaRanking =
+        [...vendedores].sort(
+            (a, b) => b.vendas - a.vendas
+        );
+
+
     ranking.innerHTML = "";
 
-    let total = 0;
 
-    vendedores.forEach(v => {
+    listaRanking.forEach((vendedor, index) => {
 
-        total += v.vendas;
+        let medalha;
 
-        equipe.innerHTML += `
 
-        <div class="vendedor">
+        if (index === 0) {
 
-            <div class="nome">
-                ${v.nome}
+            medalha = "🥇";
+
+        } else if (index === 1) {
+
+            medalha = "🥈";
+
+        } else if (index === 2) {
+
+            medalha = "🥉";
+
+        } else {
+
+            medalha =
+                (index + 1) + "º";
+
+        }
+
+
+        ranking.innerHTML += `
+
+            <div class="ranking-item">
+
+                <div class="posicao">
+                    ${medalha}
+                </div>
+
+                <div class="ranking-nome">
+                    ${vendedor.nome}
+                </div>
+
+                <div class="ranking-vendas">
+                    ${vendedor.vendas} vendas
+                </div>
+
             </div>
-
-            <div
-                class="contador"
-                id="contador-${v.id}">
-                ${v.vendas}
-            </div>
-
-            <div class="botoes">
-
-                <button
-                    class="menos"
-                    onclick="alterar(${v.id}, -1)">
-                    −1
-                </button>
-
-                <button
-                    class="mais"
-                    onclick="alterar(${v.id}, 1)">
-                    +1
-                </button>
-
-            </div>
-
-        </div>
 
         `;
 
     });
 
 
-    /* Ranking */
+    /* TOTAL */
 
-    vendedores.forEach((v, index) => {
+    let total = 0;
 
-        let medalha;
 
-        if (index === 0)
-            medalha = "🥇";
+    vendedores.forEach(vendedor => {
 
-        else if (index === 1)
-            medalha = "🥈";
-
-        else if (index === 2)
-            medalha = "🥉";
-
-        else
-            medalha = `${index + 1}º`;
-
-        ranking.innerHTML += `
-
-        <div class="ranking-item">
-
-            <div class="posicao">
-                ${medalha}
-            </div>
-
-            <div class="ranking-nome">
-                ${v.nome}
-            </div>
-
-            <div class="ranking-vendas">
-                ${v.vendas}
-            </div>
-
-        </div>
-
-        `;
+        total +=
+            Number(vendedor.vendas || 0);
 
     });
 
@@ -392,88 +575,132 @@ function mostrar() {
         .textContent = total;
 
 
-    if (vendedores.length > 0) {
+    /* LÍDER */
+
+    if (listaRanking.length > 0) {
 
         document.getElementById("lider")
-            .textContent = vendedores[0].nome;
+            .textContent =
+            listaRanking[0].nome;
+
 
         document.getElementById("vendasLider")
-            .textContent = vendedores[0].vendas;
+            .textContent =
+            listaRanking[0].vendas;
 
     }
 
 }
 
 
-/* ============================
-   +1 / -1
-============================ */
+/* ==========================================
+   ALTERAR VENDA
+========================================== */
 
-async function alterar(id, valor) {
+async function alterar(nome, valor) {
 
     const vendedor =
-        vendedores.find(v => v.id === id);
+        vendedores.find(
+            v => v.nome === nome
+        );
 
-    if (!vendedor)
+
+    if (!vendedor) {
+
+        alert(
+            "Vendedor não encontrado."
+        );
+
         return;
+
+    }
 
 
     let novaQuantidade =
-        vendedor.vendas + valor;
+        Number(vendedor.vendas) + valor;
 
 
-    if (novaQuantidade < 0)
+    /*
+       Não permite ficar negativo
+    */
+
+    if (novaQuantidade < 0) {
+
         novaQuantidade = 0;
+
+    }
 
 
     const { error } = await db
         .from("vendedores")
         .update({
+
             vendas: novaQuantidade
+
         })
-        .eq("id", id);
+        .eq("id", vendedor.id);
 
 
     if (error) {
 
         console.error(error);
 
-        alert("Erro ao salvar a venda.");
+        alert(
+            "Erro ao salvar a alteração."
+        );
 
         return;
 
     }
 
 
-    await carregar();
+    /*
+       Atualiza imediatamente
+    */
+
+    vendedor.vendas =
+        novaQuantidade;
+
+
+    atualizarContadores();
+
+    atualizarRanking();
 
 }
 
 
-/* ============================
-   ATUALIZAÇÃO AUTOMÁTICA
-============================ */
+/* ==========================================
+   ATUALIZAÇÃO EM TEMPO REAL
+========================================== */
 
-db.channel("vendas-em-tempo-real")
+db.channel("ranking-vendas")
 
-.on(
-    "postgres_changes",
-    {
-        event: "*",
-        schema: "public",
-        table: "vendedores"
-    },
-    function() {
+    .on(
 
-        carregar();
+        "postgres_changes",
 
-    }
-)
+        {
+            event: "*",
+            schema: "public",
+            table: "vendedores"
+        },
 
-.subscribe();
+        function(payload) {
+
+            carregar();
+
+        }
+
+    )
+
+    .subscribe();
 
 
-/* Primeira carga */
+/* ==========================================
+   INICIAR
+========================================== */
+
+criarCartoes();
 
 carregar();
 
