@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ranking de Vendas</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f3f5;
+    color: #222;
+}
+
+header {
+    background: #111;
+    color: white;
+    padding: 25px 15px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+.status {
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+.resumo {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.resumo-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 3px 10px #0002;
+}
+
+.resumo-card h3 {
+    margin: 0 0 10px;
+}
+
+.resumo-numero {
+    font-size: 35px;
+    font-weight: bold;
+}
+
+.ranking {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 3px 10px #0002;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.posicao {
+    width: 60px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.ranking-nome {
+    flex: 1;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.ranking-vendas {
+    font-weight: bold;
+}
+
+.equipe {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.vendedor {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 3px 10px #0002;
+}
+
+.nome {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.contador {
+    font-size: 55px;
+    font-weight: bold;
+    margin: 15px;
+}
+
+.botoes {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+button {
+    border: 0;
+    border-radius: 10px;
+    padding: 15px 25px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.menos {
+    background: #e53935;
+    color: white;
+}
+
+.mais {
+    background: #16a34a;
+    color: white;
+}
+
+button:active {
+    transform: scale(.95);
+}
+
+@media(max-width: 800px) {
+
+    .equipe {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .resumo {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+@media(max-width: 450px) {
+
+    .container {
+        padding: 10px;
+    }
+
+    .equipe {
+        gap: 10px;
+    }
+
+    .vendedor {
+        padding: 15px 5px;
+    }
+
+    .nome {
+        font-size: 17px;
+    }
+
+    .contador {
+        font-size: 40px;
+    }
+
+    button {
+        padding: 12px 15px;
+        font-size: 18px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🏆 RANKING DE VENDAS</h1>
+    <p>Atualização em tempo real</p>
+</header>
+
+<div class="status" id="status">
+    🔄 Conectando...
+</div>
+
+<div class="container">
+
+    <div class="resumo">
+
+        <div class="resumo-card">
+            <h3>📦 TOTAL DE VENDAS</h3>
+            <div class="resumo-numero" id="total">0</div>
+        </div>
+
+        <div class="resumo-card">
+            <h3>🥇 LÍDER</h3>
+            <div class="resumo-numero" id="lider">-</div>
+        </div>
+
+        <div class="resumo-card">
+            <h3>🏆 VENDAS DO LÍDER</h3>
+            <div class="resumo-numero" id="vendasLider">0</div>
+        </div>
+
+    </div>
+
+    <h2>🏆 Ranking</h2>
+
+    <div class="ranking" id="ranking"></div>
+
+    <h2>👥 Vendedores</h2>
+
+    <div class="equipe" id="equipe"></div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+"https://qjheutgzirjlykoyjadz.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable__FyKOqu1wA6zXvBfGkwX3A_bn2EEY67";
+
+const db = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+let vendedores = [];
+
+
+/* ============================
+   CARREGAR VENDEDORES
+============================ */
+
+async function carregar() {
+
+    const { data, error } = await db
+        .from("vendedores")
+        .select("*")
+        .order("vendas", {
+            ascending: false
+        });
+
+    if (error) {
+
+        console.error(error);
+
+        document.getElementById("status").textContent =
+            "🔴 Erro ao conectar ao banco";
+
+        return;
+    }
+
+    vendedores = data;
+
+    mostrar();
+
+    document.getElementById("status").textContent =
+        "🟢 Conectado — dados sincronizados";
+
+}
+
+
+/* ============================
+   MOSTRAR NA TELA
+============================ */
+
+function mostrar() {
+
+    const equipe =
+        document.getElementById("equipe");
+
+    const ranking =
+        document.getElementById("ranking");
+
+    equipe.innerHTML = "";
+    ranking.innerHTML = "";
+
+    let total = 0;
+
+    vendedores.forEach(v => {
+
+        total += v.vendas;
+
+        equipe.innerHTML += `
+
+        <div class="vendedor">
+
+            <div class="nome">
+                ${v.nome}
+            </div>
+
+            <div
+                class="contador"
+                id="contador-${v.id}">
+                ${v.vendas}
+            </div>
+
+            <div class="botoes">
+
+                <button
+                    class="menos"
+                    onclick="alterar(${v.id}, -1)">
+                    −1
+                </button>
+
+                <button
+                    class="mais"
+                    onclick="alterar(${v.id}, 1)">
+                    +1
+                </button>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+
+    /* Ranking */
+
+    vendedores.forEach((v, index) => {
+
+        let medalha;
+
+        if (index === 0)
+            medalha = "🥇";
+
+        else if (index === 1)
+            medalha = "🥈";
+
+        else if (index === 2)
+            medalha = "🥉";
+
+        else
+            medalha = `${index + 1}º`;
+
+        ranking.innerHTML += `
+
+        <div class="ranking-item">
+
+            <div class="posicao">
+                ${medalha}
+            </div>
+
+            <div class="ranking-nome">
+                ${v.nome}
+            </div>
+
+            <div class="ranking-vendas">
+                ${v.vendas}
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+
+    document.getElementById("total")
+        .textContent = total;
+
+
+    if (vendedores.length > 0) {
+
+        document.getElementById("lider")
+            .textContent = vendedores[0].nome;
+
+        document.getElementById("vendasLider")
+            .textContent = vendedores[0].vendas;
+
+    }
+
+}
+
+
+/* ============================
+   +1 / -1
+============================ */
+
+async function alterar(id, valor) {
+
+    const vendedor =
+        vendedores.find(v => v.id === id);
+
+    if (!vendedor)
+        return;
+
+
+    let novaQuantidade =
+        vendedor.vendas + valor;
+
+
+    if (novaQuantidade < 0)
+        novaQuantidade = 0;
+
+
+    const { error } = await db
+        .from("vendedores")
+        .update({
+            vendas: novaQuantidade
+        })
+        .eq("id", id);
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert("Erro ao salvar a venda.");
+
+        return;
+
+    }
+
+
+    await carregar();
+
+}
+
+
+/* ============================
+   ATUALIZAÇÃO AUTOMÁTICA
+============================ */
+
+db.channel("vendas-em-tempo-real")
+
+.on(
+    "postgres_changes",
+    {
+        event: "*",
+        schema: "public",
+        table: "vendedores"
+    },
+    function() {
+
+        carregar();
+
+    }
+)
+
+.subscribe();
+
+
+/* Primeira carga */
+
+carregar();
+
+</script>
+
+</body>
+</html>
