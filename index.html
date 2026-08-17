@@ -599,73 +599,61 @@ function atualizarRanking() {
 
 async function alterar(nome, valor) {
 
-    const vendedor =
-        vendedores.find(
-            v => v.nome === nome
-        );
-
+    const vendedor = vendedores.find(
+        v => v.nome === nome
+    );
 
     if (!vendedor) {
+        alert("Vendedor não encontrado.");
+        return;
+    }
 
-        alert(
-            "Vendedor não encontrado."
+    // Desabilita os botões desse vendedor
+    // enquanto a operação está sendo enviada
+    const botoes = document.querySelectorAll(
+        `button[onclick*="'${nome}'"]`
+    );
+
+    botoes.forEach(botao => {
+        botao.disabled = true;
+    });
+
+    try {
+
+        const { data, error } = await db.rpc(
+            "alterar_vendas",
+            {
+                vendedor_id: vendedor.id,
+                quantidade: valor
+            }
         );
 
-        return;
+        if (error) {
+            console.error(error);
+            alert("Erro ao registrar a venda.");
+            return;
+        }
+
+        // Atualiza o valor local imediatamente
+        vendedor.vendas = Number(data);
+
+        atualizarContadores();
+        atualizarRanking();
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        alert("Erro ao registrar a alteração.");
+
+    } finally {
+
+        // Libera os botões novamente
+        botoes.forEach(botao => {
+            botao.disabled = false;
+        });
 
     }
-
-
-    let novaQuantidade =
-        Number(vendedor.vendas) + valor;
-
-
-    /*
-       Não permite ficar negativo
-    */
-
-    if (novaQuantidade < 0) {
-
-        novaQuantidade = 0;
-
-    }
-
-
-    const { error } = await db
-        .from("vendedores")
-        .update({
-
-            vendas: novaQuantidade
-
-        })
-        .eq("id", vendedor.id);
-
-
-    if (error) {
-
-        console.error(error);
-
-        alert(
-            "Erro ao salvar a alteração."
-        );
-
-        return;
-
-    }
-
-
-    /*
-       Atualiza imediatamente
-    */
-
-    vendedor.vendas =
-        novaQuantidade;
-
-
-    atualizarContadores();
-
-    atualizarRanking();
-
 }
 
 
